@@ -1,209 +1,166 @@
-import { useState, useEffect } from 'react';
-import './App.css';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-type Weapon = {
-  name: string;
-  maxDamage: number;
-};
+// Fonction utilitaire
+const rollDice = () => Math.floor(Math.random() * 100) + 1;
 
-type Robot = {
-  name: string;
-  weapons: Weapon[];
-  health: number;
-};
-
-export default function App() {
-  const [nombreArmes, setNombreArmes] = useState(3);
-
-  const baseWeapons = [
-    { name: 'Laser', maxDamage: 20 },
-    { name: 'Missile', maxDamage: 30 },
-    { name: 'Plasma', maxDamage: 25 },
-    { name: 'Canon', maxDamage: 25 },
-    { name: 'Électrochoc', maxDamage: 15 },
-    { name: 'Rayon Gamma', maxDamage: 35 }
-  ];
-
-  const construireRobots = () => [
-    {
-      name: 'Robot A',
-      weapons: baseWeapons.slice(0, nombreArmes),
-      health: 100
-    },
-    {
-      name: 'Robot B',
-      weapons: baseWeapons.slice(3, 3 + nombreArmes),
-      health: 100
-    }
-  ];
-
-  const [robots, setRobots] = useState<Robot[]>(construireRobots());
-  const [selectedWeaponIndex, setSelectedWeaponIndex] = useState<number[]>([0, 0]);
-  const [message, setMessage] = useState('');
-  const [turn, setTurn] = useState<0 | 1>(0);
-  const [historique, setHistorique] = useState<string[]>([]);
-
-  // Met à jour les robots si le nombre d'armes change
-  useEffect(() => {
-    setRobots(construireRobots());
-    setSelectedWeaponIndex([0, 0]);
-    setMessage('');
-    setHistorique([]);
-    setTurn(0);
-  }, [nombreArmes]);
-
-  const lancerDe = (faces: number = 6) => Math.floor(Math.random() * faces) + 1;
-
-  const attaquer = () => {
-    const attaquant = turn;
-    const defenseur = turn === 0 ? 1 : 0;
-    const weapon = robots[attaquant].weapons[selectedWeaponIndex[attaquant]];
-
-    const touche = lancerDe();
-
-    if (touche < 4) {
-      const missMsg = `${robots[attaquant].name} a raté avec ${weapon.name}.`;
-      setMessage(missMsg);
-      setHistorique((h) => [missMsg, ...h]);
-    } else {
-      const degats = lancerDe(weapon.maxDamage);
-      const nouvelleVie = Math.max(0, robots[defenseur].health - degats);
-
-      const nouveauxRobots = [...robots];
-      nouveauxRobots[defenseur] = {
-        ...robots[defenseur],
-        health: nouvelleVie,
-      };
-      setRobots(nouveauxRobots);
-
-      const hitMsg = `${robots[attaquant].name} a touché ${robots[defenseur].name} avec ${weapon.name} pour ${degats} points de dégâts !`;
-      setMessage(hitMsg);
-      setHistorique((h) => [hitMsg, ...h]);
-    }
-
-    setTurn(defenseur as 0 | 1);
-  };
-
-  const changerArme = (joueur: number, index: number) => {
-    const nouveauChoix = [...selectedWeaponIndex];
-    nouveauChoix[joueur] = index;
-    setSelectedWeaponIndex(nouveauChoix);
-  };
-
-  const changerNomRobot = (index: number, nouveauNom: string) => {
-    const r = [...robots];
-    r[index].name = nouveauNom;
-    setRobots(r);
-  };
-
-  const changerNomArme = (robotIndex: number, weaponIndex: number, nom: string) => {
-    const r = [...robots];
-    r[robotIndex].weapons[weaponIndex].name = nom;
-    setRobots(r);
-  };
-
-  const recommencer = () => {
-    setRobots(construireRobots());
-    setSelectedWeaponIndex([0, 0]);
-    setMessage('');
-    setHistorique([]);
-    setTurn(0);
+// Composant configuration des armes
+const WeaponSetup = ({ weapons, setWeapons, onStart }) => {
+  const handleChange = (index, key, value) => {
+    const updated = [...weapons];
+    updated[index][key] = Number(value);
+    setWeapons(updated);
   };
 
   return (
-    <div className="App" style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f0f4f8' }}>
-      <h1 style={{ textAlign: 'center', color: '#2b2d42' }}>🤖 Duel de Robots 🤖</h1>
-
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <h3>Choisissez le nombre d'armes par robot :</h3>
-        {[1, 2, 3].map((nombre) => (
-          <label key={nombre} style={{ margin: '0 10px' }}>
-            <input
-              type="radio"
-              value={nombre}
-              checked={nombreArmes === nombre}
-              onChange={() => setNombreArmes(nombre)}
-            />
-            {nombre} arme(s)
-          </label>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '2rem' }}>
-        {robots.map((robot, i) => (
-          <div
-            key={i}
-            style={{
-              background: '#ffffff',
-              borderRadius: '15px',
-              padding: '20px',
-              width: '45%',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-            }}
-          >
-            <h2>
-              <input
-                type="text"
-                value={robot.name}
-                onChange={(e) => changerNomRobot(i, e.target.value)}
-                style={{ fontSize: '1.2rem', padding: '5px', width: '100%' }}
+    <div className="p-6 w-full max-w-3xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Configurer les armes</h2>
+      {weapons.map((weapon, index) => (
+        <Card key={index} className="mb-4 p-4">
+          <CardContent className="space-y-2">
+            <h3 className="font-semibold text-lg">{weapon.name}</h3>
+            <div className="flex gap-4 items-center">
+              <label className="w-32">Dégâts max :</label>
+              <Input
+                type="number"
+                value={weapon.damage}
+                onChange={(e) => handleChange(index, "damage", e.target.value)}
               />
-            </h2>
-            <p style={{ fontWeight: 'bold', color: '#ef233c' }}>❤️ {robot.health} PV</p>
-            <p style={{ marginTop: '1rem', fontWeight: 'bold' }}>🔫 Choix de l'arme :</p>
-            {robot.weapons.map((w, j) => (
-              <div key={j} style={{ marginBottom: '8px' }}>
-                <input
-                  type="radio"
-                  name={`weapon-${i}`}
-                  value={j}
-                  checked={selectedWeaponIndex[i] === j}
-                  onChange={() => changerArme(i, j)}
-                  disabled={turn !== i || robot.health === 0}
-                />
-                <input
-                  type="text"
-                  value={w.name}
-                  onChange={(e) => changerNomArme(i, j, e.target.value)}
-                  style={{ marginLeft: '8px', padding: '3px' }}
-                />
-                <span style={{ marginLeft: '5px', color: '#555' }}>(max {w.maxDamage} pts)</span>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+            </div>
+            <div className="flex gap-4 items-center">
+              <label className="w-32">Précision (%) :</label>
+              <Input
+                type="number"
+                value={weapon.accuracy}
+                onChange={(e) =>
+                  handleChange(index, "accuracy", e.target.value)
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+      <Button onClick={onStart} className="mt-4">
+        Démarrer la partie
+      </Button>
+    </div>
+  );
+};
 
-      <div style={{ textAlign: 'center' }}>
-        <button
-          onClick={attaquer}
-          disabled={robots.some(r => r.health === 0)}
-          style={{ padding: '10px 20px', fontSize: '1rem', backgroundColor: '#2b2d42', color: 'white', border: 'none', borderRadius: '8px' }}
-        >
-          ⚔️ Attaquer ({robots[turn].name})
-        </button>
-
-        <button
-          onClick={recommencer}
-          style={{ marginLeft: '1rem', padding: '10px 20px', fontSize: '1rem', backgroundColor: '#8d99ae', color: 'white', border: 'none', borderRadius: '8px' }}
-        >
-          🔁 Recommencer
-        </button>
-
-        <p style={{ marginTop: '1rem', fontStyle: 'italic' }}>{message}</p>
-
-        {robots.some(r => r.health === 0) && (
-          <h2 style={{ color: '#2b9348' }}>🎉 {robots.find(r => r.health > 0)?.name} a gagné !</h2>
-        )}
-      </div>
-
-      <div style={{ marginTop: '2rem', background: '#edf2f4', padding: '15px', borderRadius: '10px' }}>
-        <h3>📜 Historique des attaques</h3>
-        <ul>
-          {historique.map((entry, i) => (
-            <li key={i} style={{ marginBottom: '5px' }}>{entry}</li>
+// Composant Robot
+const Robot = ({ name, health, onAttack, isDead, weapons }) => {
+  return (
+    <Card className="w-full max-w-md shadow-xl rounded-2xl p-4 m-4 bg-white">
+      <CardContent className="text-center">
+        <h2 className="text-xl font-bold mb-2">{name}</h2>
+        <p className={`text-lg ${isDead ? "text-red-500" : ""}`}>
+          PV : {health}
+        </p>
+        <div className="flex flex-wrap justify-center gap-2 mt-4">
+          {weapons.map((weapon) => (
+            <Button
+              key={weapon.name}
+              onClick={() => onAttack(weapon)}
+              disabled={isDead}
+              className="px-4 py-2 text-sm"
+            >
+              {weapon.name}
+            </Button>
           ))}
-        </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Composant principal
+export default function Game() {
+  const [robot1Health, setRobot1Health] = useState(100);
+  const [robot2Health, setRobot2Health] = useState(100);
+  const [logs, setLogs] = useState([]);
+  const [gameStarted, setGameStarted] = useState(false);
+
+  // Valeurs par défaut des armes
+  const [weapons, setWeapons] = useState([
+    { name: "Laser", damage: 20, accuracy: 70 },
+    { name: "Missile", damage: 30, accuracy: 50 },
+    { name: "Canon Plasma", damage: 25, accuracy: 60 },
+  ]);
+
+  const handleAttack = (attacker, target, setTargetHealth, weapon) => {
+    if (target <= 0 || attacker <= 0) return;
+
+    const hitRoll = rollDice();
+    const hit = hitRoll <= weapon.accuracy;
+
+    let logMessage = `${weapon.name} utilisé : `;
+    if (hit) {
+      setTargetHealth((prev) => Math.max(prev - weapon.damage, 0));
+      logMessage += `TOUCHE (${hitRoll} ≤ ${weapon.accuracy}) ! ${weapon.damage} dégâts.`;
+    } else {
+      logMessage += `RATE (${hitRoll} > ${weapon.accuracy}).`;
+    }
+
+    setLogs((prevLogs) => [logMessage, ...prevLogs]);
+  };
+
+  if (!gameStarted) {
+    return (
+      <WeaponSetup
+        weapons={weapons}
+        setWeapons={setWeapons}
+        onStart={() => {
+          setRobot1Health(100);
+          setRobot2Health(100);
+          setLogs([]);
+          setGameStarted(true);
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center space-y-6 p-6">
+      <h1 className="text-2xl font-bold">Combat de Robots</h1>
+
+      <div className="flex flex-wrap justify-center gap-6">
+        <Robot
+          name="Robot Alpha"
+          health={robot1Health}
+          isDead={robot1Health <= 0}
+          weapons={weapons}
+          onAttack={(weapon) =>
+            handleAttack(robot1Health, robot2Health, setRobot2Health, weapon)
+          }
+        />
+        <Robot
+          name="Robot Bêta"
+          health={robot2Health}
+          isDead={robot2Health <= 0}
+          weapons={weapons}
+          onAttack={(weapon) =>
+            handleAttack(robot2Health, robot1Health, setRobot1Health, weapon)
+          }
+        />
+      </div>
+
+      {(robot1Health <= 0 || robot2Health <= 0) && (
+        <div className="text-xl font-semibold text-red-600">
+          {robot1Health <= 0 && "Robot Alpha est détruit !"}
+          {robot2Health <= 0 && "Robot Bêta est détruit !"}
+        </div>
+      )}
+
+      <div className="mt-8 w-full max-w-2xl">
+        <h2 className="text-lg font-bold mb-2">Historique des attaques</h2>
+        <div className="bg-gray-100 p-3 rounded-lg h-40 overflow-y-scroll text-sm font-mono">
+          {logs.length === 0 && <p>Aucune attaque pour l’instant.</p>}
+          {logs.map((log, index) => (
+            <p key={index}>➤ {log}</p>
+          ))}
+        </div>
       </div>
     </div>
   );
