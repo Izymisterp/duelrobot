@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
 type Weapon = {
@@ -13,28 +13,33 @@ type Robot = {
 };
 
 export default function App() {
-  const initialRobots: Robot[] = [
-    {
-      name: 'Robot A',
-      weapons: [
-        { name: 'Laser', maxDamage: 20 },
-        { name: 'Missile', maxDamage: 30 },
-        { name: 'Plasma', maxDamage: 25 }
-      ],
-      health: 100
-    },
-    {
-      name: 'Robot B',
-      weapons: [
-        { name: 'Canon', maxDamage: 25 },
-        { name: 'Électrochoc', maxDamage: 15 },
-        { name: 'Rayon Gamma', maxDamage: 35 }
-      ],
-      health: 100
-    }
-  ];
+  const [nombreArmes, setNombreArmes] = useState(3);
 
-  const [robots, setRobots] = useState<Robot[]>(structuredClone(initialRobots));
+  const initialRobots = () => {
+    const weapons = [
+      { name: 'Laser', maxDamage: 20 },
+      { name: 'Missile', maxDamage: 30 },
+      { name: 'Plasma', maxDamage: 25 },
+      { name: 'Canon', maxDamage: 25 },
+      { name: 'Électrochoc', maxDamage: 15 },
+      { name: 'Rayon Gamma', maxDamage: 35 }
+    ];
+
+    return [
+      {
+        name: 'Robot A',
+        weapons: weapons.slice(0, nombreArmes),
+        health: 100
+      },
+      {
+        name: 'Robot B',
+        weapons: weapons.slice(3, 3 + nombreArmes),
+        health: 100
+      }
+    ];
+  };
+
+  const [robots, setRobots] = useState<Robot[]>(structuredClone(initialRobots()));
   const [selectedWeaponIndex, setSelectedWeaponIndex] = useState<number[]>([0, 0]);
   const [message, setMessage] = useState('');
   const [turn, setTurn] = useState<0 | 1>(0);
@@ -91,7 +96,7 @@ export default function App() {
   };
 
   const recommencer = () => {
-    setRobots(structuredClone(initialRobots));
+    setRobots(structuredClone(initialRobots()));
     setSelectedWeaponIndex([0, 0]);
     setMessage('');
     setHistorique([]);
@@ -101,6 +106,21 @@ export default function App() {
   return (
     <div className="App" style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f0f4f8' }}>
       <h1 style={{ textAlign: 'center', color: '#2b2d42' }}>🤖 Duel de Robots 🤖</h1>
+
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <h3>Choisissez le nombre d'armes par robot :</h3>
+        {[1, 2, 3].map((nombre) => (
+          <label key={nombre} style={{ margin: '0 10px' }}>
+            <input
+              type="radio"
+              value={nombre}
+              checked={nombreArmes === nombre}
+              onChange={() => setNombreArmes(nombre)}
+            />
+            {nombre} arme(s)
+          </label>
+        ))}
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '2rem' }}>
         {robots.map((robot, i) => (
