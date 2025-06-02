@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 type Weapon = {
@@ -15,35 +15,42 @@ type Robot = {
 export default function App() {
   const [nombreArmes, setNombreArmes] = useState(3);
 
-  const initialRobots = () => {
-    const weapons = [
-      { name: 'Laser', maxDamage: 20 },
-      { name: 'Missile', maxDamage: 30 },
-      { name: 'Plasma', maxDamage: 25 },
-      { name: 'Canon', maxDamage: 25 },
-      { name: 'Électrochoc', maxDamage: 15 },
-      { name: 'Rayon Gamma', maxDamage: 35 }
-    ];
+  const baseWeapons = [
+    { name: 'Laser', maxDamage: 20 },
+    { name: 'Missile', maxDamage: 30 },
+    { name: 'Plasma', maxDamage: 25 },
+    { name: 'Canon', maxDamage: 25 },
+    { name: 'Électrochoc', maxDamage: 15 },
+    { name: 'Rayon Gamma', maxDamage: 35 }
+  ];
 
-    return [
-      {
-        name: 'Robot A',
-        weapons: weapons.slice(0, nombreArmes),
-        health: 100
-      },
-      {
-        name: 'Robot B',
-        weapons: weapons.slice(3, 3 + nombreArmes),
-        health: 100
-      }
-    ];
-  };
+  const construireRobots = () => [
+    {
+      name: 'Robot A',
+      weapons: baseWeapons.slice(0, nombreArmes),
+      health: 100
+    },
+    {
+      name: 'Robot B',
+      weapons: baseWeapons.slice(3, 3 + nombreArmes),
+      health: 100
+    }
+  ];
 
-  const [robots, setRobots] = useState<Robot[]>(structuredClone(initialRobots()));
+  const [robots, setRobots] = useState<Robot[]>(construireRobots());
   const [selectedWeaponIndex, setSelectedWeaponIndex] = useState<number[]>([0, 0]);
   const [message, setMessage] = useState('');
   const [turn, setTurn] = useState<0 | 1>(0);
   const [historique, setHistorique] = useState<string[]>([]);
+
+  // Met à jour les robots si le nombre d'armes change
+  useEffect(() => {
+    setRobots(construireRobots());
+    setSelectedWeaponIndex([0, 0]);
+    setMessage('');
+    setHistorique([]);
+    setTurn(0);
+  }, [nombreArmes]);
 
   const lancerDe = (faces: number = 6) => Math.floor(Math.random() * faces) + 1;
 
@@ -96,7 +103,7 @@ export default function App() {
   };
 
   const recommencer = () => {
-    setRobots(structuredClone(initialRobots()));
+    setRobots(construireRobots());
     setSelectedWeaponIndex([0, 0]);
     setMessage('');
     setHistorique([]);
